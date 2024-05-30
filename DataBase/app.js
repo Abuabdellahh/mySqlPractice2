@@ -8,15 +8,10 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-
 // middleware
-app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded())
-
-
-
-
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded());
 
 // *********** connection***************
 const Connection = mysql.createConnection({
@@ -28,7 +23,7 @@ const Connection = mysql.createConnection({
 
 // ******* report******
 Connection.connect((err) => {
-   if (err) throw err;
+  if (err) throw err;
   else console.log("database connected successfully!");
 });
 
@@ -37,11 +32,10 @@ Connection.connect((err) => {
 // ● Include the execution code directly in the module to be executed as you run the app
 // ● Use the Express module to receive requests. Configure your module in a way that it executes the queries when the "/install" URL is visited
 
-
 // ****************TEST API ******************
-app.get('/',(req,res)=>{
-  res.send('work sucssefuly!')
-})
+app.get("/", (req, res) => {
+  res.send("work sucssefuly!");
+});
 // ************ create table via API******************
 app.get("/install", (req, res) => {
   let message = "Tables Created";
@@ -84,28 +78,26 @@ app.get("/install", (req, res) => {
     FOREIGN KEY (product_id) REFERENCES Products(product_id)
   )`;
 
-
-
-// ***************** QUERY*********************
+  // ***************** QUERY*********************
   Connection.query(Products, (err, results, fields) => {
-      if (err) throw err;
+    if (err) throw err;
     // else console.table(fields);
   });
   Connection.query(createProductDescription, (err, results, fields) => {
-     if (err) throw err;
-  //  else console.table(fields);
+    if (err) throw err;
+    //  else console.table(fields);
   });
   Connection.query(createProductPrice, (err, results, fields) => {
-     if (err) throw err;
-  //  else console.table(fields);
+    if (err) throw err;
+    //  else console.table(fields);
   });
   Connection.query(createUser, (err, results, fields) => {
-     if (err) throw err;
-  //  else console.table(fields);
+    if (err) throw err;
+    //  else console.table(fields);
   });
   Connection.query(createOrders, (err, results, fields) => {
-     if (err) throw err;
-   else console.table(fields);
+    if (err) throw err;
+    else console.table(fields);
   });
 
   res.end(message);
@@ -113,80 +105,81 @@ app.get("/install", (req, res) => {
 
 // ******************* INSERT Data API******************************
 app.post("/addProduct", (req, res) => {
+  const {
+    UserName,
+    UserPassword,
+    ProductName,
+    Description,
+    Price,
+    MonthlyPlan,
+    Image,
+    URL,
+  } = req.body;
 
-     const{UserName,UserPassword, ProductName,Description,Price,MonthlyPlan, Image, URL}=req.body;
-
-
-    // **************** for query purpose*****************************
- let Products= `INSERT INTO Products (product_url, product_name) VALUES (?,?)`
- let ProductDescription=  `INSERT INTO ProductDescription (product_id,
+  // **************** for query purpose*****************************
+  let Products = `INSERT INTO Products (product_url, product_name) VALUES (?,?)`;
+  let ProductDescription = `INSERT INTO ProductDescription (product_id,
                             product_brief_description,product_description,
-                            product_img,product_link) VALUES (?,?,?,?,? )`
- let ProductPrice=        `INSERT INTO ProductPrice  (product_id,starting_price,
-                           price_range) VALUES (?,?,?)`
- let user=    `INSERT INTO user (User_name, User_password) VALUES (?,?)`
-let Orders=   `INSERT INTO Orders (product_id, user_id) VALUES (?,?)`
-
+                            product_img,product_link) VALUES (?,?,?,?,? )`;
+  let ProductPrice = `INSERT INTO ProductPrice  (product_id,starting_price,
+                           price_range) VALUES (?,?,?)`;
+  let user = `INSERT INTO user (User_name, User_password) VALUES (?,?)`;
+  let Orders = `INSERT INTO Orders (product_id, user_id) VALUES (?,?)`;
 
   // *****************query to insert data********************
-  Connection.query( Products ,[ URL, ProductName],(err, result)=> {
+  Connection.query(Products, [URL, ProductName], (err, result) => {
+    if (err) throw err;
+    console.log("1 record inserted");
+
+    //  ************** used for foreign key****************
+    const id = result.insertId;
+
+    Connection.query(
+      ProductDescription,
+      [id, Description, Description, Image, URL],
+      (err, result) => {
         if (err) throw err;
+        console.log("1 record inserted ");
+      }
+    );
+    Connection.query(ProductPrice, [id, Price, MonthlyPlan], (err, result) => {
+      if (err) throw err;
       console.log("1 record inserted");
+    });
 
-      //  ************** used for foreign key****************
-      const id = result.insertId;
-
-      Connection.query(ProductDescription,[id,Description,Description,Image,URL], (err, result)=> {
-            if (err) throw err;
-            console.log("1 record inserted ");
-        }
-      );
-      Connection.query(ProductPrice ,[id,Price,MonthlyPlan], (err, result)=>{
-            if (err) throw err;
-          console.log("1 record inserted");
-        }
-      );
-
-      Connection.query(user, [UserName,UserPassword], (err, result)=>{
-            if (err) throw err;
-          console.log("1 record inserted");
-          // *********** userID for foreign key purpose****************
-          const user_id =result.insertId;
-          Connection.query(Orders,[id,user_id],(err, result)=> {
-                if (err) throw err;
-              console.log("1 record inserted");
-            }
-          );
- 
-        }
-      );
-
-
-    }
-  );
+    Connection.query(user, [UserName, UserPassword], (err, result) => {
+      if (err) throw err;
+      console.log("1 record inserted");
+      // *********** userID for foreign key purpose****************
+      const user_id = result.insertId;
+      Connection.query(Orders, [id, user_id], (err, result) => {
+        if (err) throw err;
+        console.log("1 record inserted");
+      });
+    });
+  });
 
   // **************** report for inserted data*************************
   res.end("data inserted successfully!");
 });
 
-app.get('/getALL',(req,res)=>{
-  let getAll=`SELECT*FROM  orders JOIN productdescription 
+app.get("/getALL", (req, res) => {
+  let getAll = `SELECT*FROM  orders JOIN productdescription 
   JOIN productprice JOIN products JOIN user
    ON products.product_id= orders.product_id AND
   products.product_id=productdescription.product_id AND
-   products.product_id=productprice.product_id ;`
-   Connection.query(getAll,(err,result)=>{
-    if(err) throw err;
-    else console.log(result);
-    res.send(result)
-   })
-  
-})
+   products.product_id=productprice.product_id ;`;
+  Connection.query(getAll, (err, result) => {
+    if (err) throw err;
+    else console.log("Great work!");
+    res.send(result);
+  });
+});
 
 // ************* server and hostName*****************
-const port=process.env.PORT|| 2025
-let hostName="localhost"
+const port = process.env.PORT || 2025;
+let hostName = "localhost";
 
-app.listen(port,()=>{
+app.listen(port, () => {
   console.log(`Server is running on ${port} http://${hostName}:${port}`);
-})
+});

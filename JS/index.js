@@ -1,12 +1,11 @@
-
 // Function to fetch data and populate the table
 function fetchData() {
-  fetch('http://localhost:2025/getAll')
-    .then(response => response.json())
-    .then(data => {
-      const tableBody = document.getElementById('table-body');
-      let tableRows = '';
-      data.forEach(item => {
+  fetch("http://localhost:2025/getAll")
+    .then((response) => response.json())
+    .then((data) => {
+      const tableBody = document.getElementById("table-body");
+      let tableRows = "";
+      data.forEach((item) => {
         tableRows += `<tr>
                         <td>${item.User_name}</td>
                         <td>${item.user_id}</td>
@@ -19,16 +18,11 @@ function fetchData() {
                         <td>${item.starting_price}</td>
                         <td>${item.price_range}</td>
                       </tr>`;
-
-
-
-            
       });
       tableBody.innerHTML = tableRows;
     })
-    .catch(error => console.error('Error:', error));
+    .catch((error) => console.error("Error:", error));
 }
 
 // Call the function to fetch data and populate the table
 fetchData();
-
